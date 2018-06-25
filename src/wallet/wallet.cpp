@@ -6,6 +6,7 @@
 #include "wallet/wallet.h"
 
 #include "chain.h"
+#include "base58.h"
 #include "checkpoints.h"
 #include "config.h"
 #include "consensus/consensus.h"
@@ -2140,6 +2141,60 @@ Amount CWallet::GetBalance() const {
     }
 
     return nTotal;
+}
+
+Amount CWallet::JSONGetBalance(const std::string& account) const
+{
+    Amount nTotal(0);
+    {
+        LOCK2(cs_main, cs_wallet);
+        for (std::map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+        {
+            const CWalletTx* pcoin = &(*it).second;
+            if (pcoin->IsTrusted())
+                nTotal += pcoin->JSONGetAvailableCredit(true, account);
+        }
+    }
+
+    return nTotal;
+}
+
+Amount CWalletTx::JSONGetAvailableCredit(bool fUseCache, std::string account) const
+{
+    Amount nCredit(0);
+    if (pwallet == 0)
+        return nCredit;
+
+    // Must wait until coinbase is safely deep enough in the chain before valuing it
+    if (IsCoinBase() && GetBlocksToMaturity() > 0)
+        return nCredit;
+
+    if (fUseCache && fAvailableCreditCached)
+        return nAvailableCreditCached;
+    
+    uint256 hashTx = GetId();
+    for (unsigned int i = 0; i < tx->vout.size(); i++)
+    {
+        if (!pwallet->IsSpent(hashTx, i))
+        {
+            const CTxOut &txout = tx->vout[i];
+			
+			bool isMyAddress = false;
+			CTxDestination address;
+            isMyAddress = EncodeLegacyAddr(address, Params()) == account;
+			if(!isMyAddress) {
+				continue;
+			}
+			
+            nCredit += pwallet->GetCredit(txout, ISMINE_SPENDABLE);
+            if (!MoneyRange(nCredit))
+                throw std::runtime_error(std::string(__func__) + " : value out of range");
+        }
+    }
+
+    nAvailableCreditCached = nCredit;
+    fAvailableCreditCached = false;
+    return nCredit;
 }
 
 Amount CWallet::GetUnconfirmedBalance() const {

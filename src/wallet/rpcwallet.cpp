@@ -27,6 +27,7 @@
 #include <univalue.h>
 
 #include <event2/http.h>
+#include "base58.h"
 
 static const std::string WALLET_ENDPOINT_BASE = "/wallet/";
 
@@ -916,22 +917,35 @@ static UniValue getbalance(const Config &config,
         return ValueFromAmount(pwallet->GetBalance());
     }
 
-    const std::string *account = request.params[0].get_str() != "*"
-                                     ? &request.params[0].get_str()
-                                     : nullptr;
+    // const std::string *account = request.params[0].get_str() != "*"
+    //                                  ? &request.params[0].get_str()
+    //                                  : nullptr;
+   
 
-    int nMinDepth = 1;
-    if (request.params.size() > 1) {
+    // int nMinDepth = 1;
+    // if (request.params.size() > 1) {
+    //     nMinDepth = request.params[1].get_int();
+    // }
+
+    // isminefilter filter = ISMINE_SPENDABLE;
+    // if (request.params.size() > 2 && request.params[2].get_bool()) {
+    //     filter = filter | ISMINE_WATCH_ONLY;
+    // }
+
+    // return ValueFromAmount(
+    //     pwallet->GetLegacyBalance(filter, nMinDepth, account));
+
+    const std::string& account_param = request.params[0].get_str();
+    const std::string* account = account_param != "*" ? &account_param : nullptr;
+     int nMinDepth = 1;
+    if (!request.params[1].isNull())
         nMinDepth = request.params[1].get_int();
-    }
-
     isminefilter filter = ISMINE_SPENDABLE;
-    if (request.params.size() > 2 && request.params[2].get_bool()) {
-        filter = filter | ISMINE_WATCH_ONLY;
-    }
+    if(!request.params[2].isNull())
+        if(request.params[2].get_bool())
+            filter = filter | ISMINE_WATCH_ONLY;
 
-    return ValueFromAmount(
-        pwallet->GetLegacyBalance(filter, nMinDepth, account));
+	return ValueFromAmount(pwallet->JSONGetBalance(*account));
 }
 
 static UniValue getunconfirmedbalance(const Config &config,
@@ -3204,6 +3218,7 @@ static UniValue listunspent(const Config &config,
 
     return results;
 }
+
 
 static UniValue fundrawtransaction(const Config &config,
                                    const JSONRPCRequest &request) {

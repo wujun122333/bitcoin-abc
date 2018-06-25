@@ -425,6 +425,7 @@ public:
     Amount GetCredit(const isminefilter &filter) const;
     Amount GetImmatureCredit(bool fUseCache = true) const;
     Amount GetAvailableCredit(bool fUseCache = true) const;
+    Amount JSONGetAvailableCredit(bool fUseCache, std::string account) const;
     Amount GetImmatureWatchOnlyCredit(const bool &fUseCache = true) const;
     Amount GetAvailableWatchOnlyCredit(const bool &fUseCache = true) const;
     Amount GetChange() const;
@@ -894,6 +895,7 @@ public:
     std::vector<uint256> ResendWalletTransactionsBefore(int64_t nTime,
                                                         CConnman *connman);
     Amount GetBalance() const;
+    Amount JSONGetBalance(const std::string& account) const;
     Amount GetUnconfirmedBalance() const;
     Amount GetImmatureBalance() const;
     Amount GetWatchOnlyBalance() const;
