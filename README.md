@@ -1,4 +1,4 @@
-[Bitcoin ABC](https://www.bitcoinabc.org)
+[Bitcoin ABC](https://www.bitcoinabc.org) Lalalala
 ===========
 
 The goal of Bitcoin ABC is to create sound money that is usable by everyone in
